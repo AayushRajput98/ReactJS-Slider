@@ -5,10 +5,11 @@ import { cardElements } from '../cardElement';
 
 export const Slider = () => {
 
-    const [cards] = useState(cardElements);
-    const firstSlide = cards[0]
-    const secondSlide = cards[1]
-    const lastSlide = cards[cards.length - 1]
+    const [slides] = useState(cardElements);
+    const [auto, setAuto] = useState(true)
+    const firstSlide = slides[0]
+    const secondSlide = slides[1]
+    const lastSlide = slides[slides.length - 1]
 
     //State Variables
     const [state, setState] = useState({
@@ -20,23 +21,32 @@ export const Slider = () => {
 
     const { activeSlide, _slides, translate, transition } = state
     const transitionRef = useRef()
+    const autoPlay = useRef()
 
     //Effect Hook
     useEffect(() => {
         transitionRef.current = smoothTransition
+        autoPlay.current = goRight
     })
 
     useEffect(() => {
-        console.log('Smooth')
+        const play = () => {
+            autoPlay.current()
+        }
         const smooth = e => {
-            if (e.target.className.includes('card')) {
+            if (e.target.className.includes('slide')) {
                 transitionRef.current()
             }
         }
         const transitionEnd = window.addEventListener('transitionend', smooth)
+        let interval = null
+        interval = setInterval(play, 2500)
         return () => {
             window.removeEventListener('transitionend', transitionEnd)
+            clearInterval(interval)
+
         }
+
     }, [])
 
     useEffect(() => {
@@ -49,10 +59,10 @@ export const Slider = () => {
 
     const smoothTransition = () => {
         let _slides = []
-        if (activeSlide === cards.length - 1)
-            _slides = [cards[cards.length - 2], lastSlide, firstSlide]
+        if (activeSlide === slides.length - 1)
+            _slides = [slides[slides.length - 2], lastSlide, firstSlide]
         else if (activeSlide === 0) _slides = [lastSlide, firstSlide, secondSlide]
-        else _slides = cards.slice(activeSlide - 1, activeSlide + 2)
+        else _slides = slides.slice(activeSlide - 1, activeSlide + 2)
         setState({
             ...state,
             _slides: _slides,
@@ -66,7 +76,7 @@ export const Slider = () => {
         setState({
             ...state,
             translate: 0,
-            activeSlide: activeSlide === 0 ? cards.length - 1 : activeSlide - 1
+            activeSlide: activeSlide === 0 ? slides.length - 1 : activeSlide - 1
         })
     }
 
@@ -74,21 +84,26 @@ export const Slider = () => {
         setState({
             ...state,
             translate: -200,
-            activeSlide: activeSlide === cards.length - 1 ? 0 : activeSlide + 1
+            activeSlide: activeSlide === slides.length - 1 ? 0 : activeSlide + 1
         })
     }
+
+    const togglePlay = () => {
+        setAuto(!auto);
+    }
+
     return (
         <diV className="page" style={styleContainer}>
-            <h1> Making a smooth slider using React Hooks  </h1>
-            <div className="cardParent" style={styleCardParent}>
+            <h1 style={{ marginBottom: 100, paddingTop: 30 }}> Making a smooth slider using React Hooks  </h1>
+            <div className="slideParent" style={styleCardParent}>
                 {
-                    _slides.map((card) => {
+                    _slides.map((slide) => {
                         return (
                             <div className="row" style={styleCard} >
-                                <div key={card.id} className="card" style={{ transform: `translateX(${translate}%)`, transition: '0.5s' }}>
-                                        <h2> {card.title} </h2>
-                                    <h5> {card.subtitle} </h5>
-                                    <p style={{ marginTop: 20, marginLeft: 55, marginRight: 55, marginBottom: 40 }}> {card.text} </p>
+                                <div key={slide.id} className="slide" style={{ transform: `translateX(${translate}%)`, transition: '0.5s' }}>
+                                        <h2> {slide.title} </h2>
+                                    <h5> {slide.subtitle} </h5>
+                                    <p style={{ marginTop: 20, marginLeft: 55, marginRight: 55, marginBottom: 40 }}> {slide.text} </p>
                                     </div>
                                 </div>
                             );
@@ -96,6 +111,15 @@ export const Slider = () => {
                 }
                 <Button className="arrow" onClick={goLeft} style={styleButtonLeft} > <span> <i class="fa fa-arrow-left" aria-hidden="true"></i> </span> </Button>
                 <Button className="arrow" onClick={goRight} style={styleButtonRight} > <span> <i class="fa fa-arrow-right" aria-hidden="true"></i> </span> </Button>
+                <div className="Dots" style={styleDots}>
+                    {
+                        slides.map((slide, i) => {
+                            return (
+                                <span className="Dot" style={{ background: `${(activeSlide === i) ? 'grey' : 'black'}`, padding: 10, borderRadius: '100%', marginRight: 5 }}>  </span>
+                            )
+                        })
+                    }
+                </div>
             </div>
         </diV>
         );
@@ -119,17 +143,20 @@ const styleCardParent = {
     margin: 'auto',
     alignItems: 'center',
     width: '45%',
-    height: '70%',
+    height: '55%',
     overflow: 'hidden',
     display: 'flex',
+    backgroundColor: 'white',
+    borderRadius: '5%',
+    boxShadow: '10px 10px 10px grey'
 }
 
 const styleCard = {
-    backgroundColor: 'white',
     margin: 0, 
     minWidth: '100%',
     maxHeight: '100%',
     color: 'black',
+    border: '1px solid white',
 }
 
 const styleButtonLeft = {
@@ -140,9 +167,6 @@ const styleButtonLeft = {
     borderRadius: 100
 }
 
-const styleShadow = {
-}
-
 const styleButtonRight = {
     position: 'absolute',
     top: '50%',
@@ -151,3 +175,13 @@ const styleButtonRight = {
     borderRadius: 100
 }
 
+const styleDots = {
+    position: 'absolute',
+    bottom: 10,
+    left: 0, 
+    right: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10
+}
